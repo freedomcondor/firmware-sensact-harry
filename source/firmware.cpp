@@ -56,8 +56,8 @@ void CFirmware::Exec() {
             break;
          case CPacketControlInterface::CPacket::EType::SET_DDS_SPEED:
             /* Set the speed of the differential drive system */
-            //if(cPacket.GetDataLength() == 4) {
-            if(cPacket.GetDataLength() == 16) {
+            if(cPacket.GetDataLength() == 4) {
+            //if(cPacket.GetDataLength() == 16) {
                const uint8_t* punRxData = cPacket.GetDataPointer();
 
                int16_t nLeftVelocity = 0, nRightVelocity = 0;
@@ -65,7 +65,7 @@ void CFirmware::Exec() {
                reinterpret_cast<uint16_t&>(nRightVelocity) = (punRxData[2] << 8) | punRxData[3];
                m_cDifferentialDriveSystem.SetTargetVelocity(nLeftVelocity, nRightVelocity);
 
-			   ///*
+			   /*
 			   float fKp, fKi, fKd;
 			   uint32_t temp1_32, temp2_32, temp3_32, temp4_32, temp;
 			   temp1_32 = punRxData[4];
@@ -91,7 +91,7 @@ void CFirmware::Exec() {
 			   fKd = *(reinterpret_cast<float*>(&temp));
 
                m_cDifferentialDriveSystem.SetPIDPara(fKp, fKi, fKd);
-			   //*/
+			   */
             }
             break;
          case CPacketControlInterface::CPacket::EType::GET_DDS_PARAMS:

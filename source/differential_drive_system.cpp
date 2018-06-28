@@ -359,12 +359,12 @@ CDifferentialDriveSystem::CPIDControlStepInterrupt::CPIDControlStepInterrupt(
    m_nRightTarget(0),
    m_nRightLastError(0),
    m_fRightErrorIntegral(0.0f),
-   //m_fKp(0.707f),
-   //m_fKi(0.625f),
-   //m_fKd(0.056f) {
-   m_fKp(0.0f),
-   m_fKi(0.0f),
-   m_fKd(0.0f) {
+   m_fKp(0.707f),
+   m_fKi(0.625f),
+   m_fKd(0.056f) {
+   //m_fKp(0.0f),
+   //m_fKi(0.0f),
+   //m_fKd(0.0f) {
    Register(this, un_intr_vect_num);
    windowLength = 254;
    for (uint8_t i = 0; i < windowLength; i++)
