@@ -314,7 +314,8 @@ CDifferentialDriveSystem::CPIDControlStepInterrupt::CPIDControlStepInterrupt(
    m_fRightErrorIntegral(0.0f),
    m_fKp(0.707f),
    m_fKi(0.625f),
-   m_fKd(0.056f) {
+   m_fKd(0.056f),
+   m_fIntegralLimit(300.0f) {
    Register(this, un_intr_vect_num);
 }
 
@@ -357,10 +358,8 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::ServiceRoutine() {
    /* Accumulate the integral component */
    m_fLeftErrorIntegral += nLeftError;
    /* intergral limit*/
-   float MaxIntlimit = 300;
-   float MinIntlimit = -MaxIntlimit;
-   if (m_fLeftErrorIntegral > MaxIntlimit) m_fLeftErrorIntegral = MaxIntlimit;
-   if (m_fLeftErrorIntegral < MinIntlimit) m_fLeftErrorIntegral = MinIntlimit;
+   if (m_fLeftErrorIntegral > m_fIntegralLimit) m_fLeftErrorIntegral = m_fIntegralLimit;
+   if (m_fLeftErrorIntegral < -m_fIntegralLimit) m_fLeftErrorIntegral = -m_fIntegralLimit;
 
    /* Calculate the derivate component */
    int16_t nLeftErrorDerivative = (nLeftError - m_nLeftLastError);
@@ -381,8 +380,8 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::ServiceRoutine() {
    /* Accumulate the integral component */
    m_fRightErrorIntegral += nRightError;
    /* intergral limit*/
-   if (m_fRightErrorIntegral > MaxIntlimit) m_fRightErrorIntegral = MaxIntlimit;
-   if (m_fRightErrorIntegral < MinIntlimit) m_fRightErrorIntegral = MinIntlimit;
+   if (m_fRightErrorIntegral > m_fIntegralLimit) m_fRightErrorIntegral = m_fIntegralLimit;
+   if (m_fRightErrorIntegral < -m_fIntegralLimit) m_fRightErrorIntegral = -m_fIntegralLimit;
    /* Calculate the derivate component */
    int16_t nRightErrorDerivative = (nRightError - m_nRightLastError);
    m_nRightLastError = nRightError;

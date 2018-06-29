@@ -66,6 +66,7 @@ public:
       const float m_fKp;
       const float m_fKi;
       const float m_fKd;     
+      const float m_fIntegralLimit;     
    } m_cPIDControlStepInterrupt;
 
    friend CShaftEncodersInterrupt;
