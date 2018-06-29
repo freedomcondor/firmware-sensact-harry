@@ -360,7 +360,6 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::ServiceRoutine() {
    /* intergral limit*/
    if (m_fLeftErrorIntegral > m_fIntegralLimit) m_fLeftErrorIntegral = m_fIntegralLimit;
    if (m_fLeftErrorIntegral < -m_fIntegralLimit) m_fLeftErrorIntegral = -m_fIntegralLimit;
-
    /* Calculate the derivate component */
    int16_t nLeftErrorDerivative = (nLeftError - m_nLeftLastError);
    m_nLeftLastError = nLeftError;
