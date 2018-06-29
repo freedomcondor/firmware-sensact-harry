@@ -51,14 +51,7 @@ CDifferentialDriveSystem::CDifferentialDriveSystem() :
    /* Setup up timer 0 for PWM */
    /* Select phase correct, non-inverting PWM mode on channel A & B */
    TCCR0A |= (1 << WGM00);
-
-   /* Set precaler to 256 (approximately 61.275Hz output frequency) */
-   //TCCR0B |= (1 << CS02);
-
-   /* Set precaler to 8 (approximately 61.275Hz output frequency) */
-   //TCCR0B |= (1 << CS01);
-
-   /* Set precaler to 1 (approximately 61.275Hz output frequency) */
+   /* Set precaler to 1 */
    TCCR0B |= (1 << CS00);
 
    /* Initialize left and right motor duty cycle to zero */
@@ -80,46 +73,6 @@ CDifferentialDriveSystem::CDifferentialDriveSystem() :
 
 void CDifferentialDriveSystem::SetTargetVelocity(int16_t n_left_speed, int16_t n_right_speed) {
    m_cPIDControlStepInterrupt.SetTargetVelocity(n_left_speed, n_right_speed);
-}
-
-/****************************************/
-/****************************************/
-
-int16_t CDifferentialDriveSystem::GetLeftDDSParams(	int16_t* error, 
-													float* errorIntergral, 
-													int16_t* errorDerivative) 
-{
-   int16_t nVelocity;
-   uint8_t unSREG = SREG;
-   cli();
-
-   nVelocity = m_nLeftStepsOut;
-   *error = m_nLeftErrorOut;
-   *errorIntergral = m_fLeftErrorIntegralOut;
-   *errorDerivative = m_nLeftErrorDerivativeOut;
-
-   SREG = unSREG;
-   return nVelocity;
-}
-
-/****************************************/
-/****************************************/
-
-int16_t CDifferentialDriveSystem::GetRightDDSParams(	int16_t* error, 
-													float* errorIntergral, 
-													int16_t* errorDerivative) 
-{
-   int16_t nVelocity;
-   uint8_t unSREG = SREG;
-   cli();
-
-   nVelocity = m_nRightStepsOut;
-   *error = m_nRightErrorOut;
-   *errorIntergral = m_fRightErrorIntegralOut;
-   *errorDerivative = m_nRightErrorDerivativeOut;
-
-   SREG = unSREG;
-   return nVelocity;
 }
 
 /****************************************/
@@ -362,18 +315,7 @@ CDifferentialDriveSystem::CPIDControlStepInterrupt::CPIDControlStepInterrupt(
    m_fKp(0.707f),
    m_fKi(0.625f),
    m_fKd(0.056f) {
-   //m_fKp(0.0f),
-   //m_fKi(0.0f),
-   //m_fKd(0.0f) {
    Register(this, un_intr_vect_num);
-   windowLength = 254;
-   for (uint8_t i = 0; i < windowLength; i++)
-   {
-	   m_nLeftStepWindow[i] = 0;
-	   m_nRightStepWindow[i] = 0;
-   }
-   windowOutput = 0;
-   windowInput = windowLength - 1;
 }
 
 /****************************************/
@@ -406,27 +348,6 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::SetTargetVelocity(int16
    m_nRightTarget = n_right_speed;
 }
 
-void CDifferentialDriveSystem::SetPIDPara(float fKp, float fKi, float fKd)
-{
-	m_cPIDControlStepInterrupt.SetPIDPara(fKp,fKi,fKd);
-}
-
-void CDifferentialDriveSystem::floattry(uint8_t temp1, uint8_t temp2, uint8_t temp3, uint8_t temp4)
-{
-	float1 = temp1;
-	float2 = temp2;
-	float3 = temp3;
-	float4 = temp4;
-}
-
-void CDifferentialDriveSystem::CPIDControlStepInterrupt::SetPIDPara(float fKp, float fKi, float fKd)
-{
-	m_fKp = fKp;
-	m_fKi = fKi;
-	m_fKd = fKd;
-}
-
-
 /****************************************/
 /****************************************/
 
@@ -435,17 +356,6 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::ServiceRoutine() {
    int16_t nLeftError = m_nLeftTarget - m_pcDifferentialDriveSystem->m_nLeftSteps;
    /* Accumulate the integral component */
    m_fLeftErrorIntegral += nLeftError;
-
-   /* window */
-   /*
-   m_fLeftErrorIntegral -= m_nLeftStepWindow[windowOutput];
-   m_nLeftStepWindow[windowInput] = nLeftError;
-   windowOutput++;
-   windowInput++;
-   if (windowInput == windowLength) windowInput = 0;
-   if (windowOutput == windowLength) windowOutput = 0;
-   */
-
    /* intergral limit*/
    float MaxIntlimit = 300;
    float MinIntlimit = -MaxIntlimit;
@@ -459,26 +369,20 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::ServiceRoutine() {
    float fLeftOutput =
       (m_fKp * nLeftError) +
       (m_fKi * m_fLeftErrorIntegral) +
-      //(m_fKd * nLeftErrorDerivative);
       (m_fKd * nLeftErrorDerivative) + m_nLeftTarget;
-
    /* store the sign of the output */
    bool bLeftNegative = (fLeftOutput < 0.0f);
    /* take the absolute value */
    fLeftOutput = (bLeftNegative ? -fLeftOutput : fLeftOutput);
    /* saturate into the uint8_t range */
-   //uint8_t SPEED_MAX = 40;
    uint8_t unLeftDutyCycle = (fLeftOutput < float(UINT8_MAX)) ? uint8_t(fLeftOutput) : UINT8_MAX;
-   //uint8_t unLeftDutyCycle = (fLeftOutput < float(SPEED_MAX)) ? uint8_t(fLeftOutput) : SPEED_MAX;
    /* Calculate right PID intermediates */
    int16_t nRightError = m_nRightTarget - m_pcDifferentialDriveSystem->m_nRightSteps;
    /* Accumulate the integral component */
    m_fRightErrorIntegral += nRightError;
-
    /* intergral limit*/
    if (m_fRightErrorIntegral > MaxIntlimit) m_fRightErrorIntegral = MaxIntlimit;
    if (m_fRightErrorIntegral < MinIntlimit) m_fRightErrorIntegral = MinIntlimit;
-
    /* Calculate the derivate component */
    int16_t nRightErrorDerivative = (nRightError - m_nRightLastError);
    m_nRightLastError = nRightError;
@@ -486,59 +390,32 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::ServiceRoutine() {
    float fRightOutput =
       (m_fKp * nRightError) +
       (m_fKi * m_fRightErrorIntegral) +
-      //(m_fKd * nRightErrorDerivative);
       (m_fKd * nRightErrorDerivative) + m_nRightTarget;
    /* store the sign of the output */
    bool bRightNegative = (fRightOutput < 0.0f);
    /* take the absolute value */
    fRightOutput = (bRightNegative ? -fRightOutput : fRightOutput);
    /* saturate into the uint8_t range */
-   uint8_t unRightDutyCycle = (fRightOutput <float(UINT8_MAX)) ? uint8_t(fRightOutput) : UINT8_MAX;
-   //uint8_t unRightDutyCycle = (fRightOutput < float(SPEED_MAX)) ? uint8_t(fRightOutput) : SPEED_MAX;
+   uint8_t unRightDutyCycle = (fRightOutput < float(UINT8_MAX)) ? uint8_t(fRightOutput) : UINT8_MAX;
 
    /* Update right motor */
-   //if(((m_nRightTarget < 0) && bRightNegative) || ((m_nRightTarget >= 0) && !bRightNegative)) {
-   if(1) {
-      m_pcDifferentialDriveSystem->ConfigureRightMotor(
-         bRightNegative ? CDifferentialDriveSystem::EBridgeMode::REVERSE_PWM_FD :
-                          CDifferentialDriveSystem::EBridgeMode::FORWARD_PWM_FD,
-         unRightDutyCycle);
-   }
-   else {
-       m_pcDifferentialDriveSystem->ConfigureRightMotor(CDifferentialDriveSystem::EBridgeMode::COAST);
-   }
+   m_pcDifferentialDriveSystem->ConfigureRightMotor(
+      bRightNegative ? CDifferentialDriveSystem::EBridgeMode::REVERSE_PWM_FD :
+                       CDifferentialDriveSystem::EBridgeMode::FORWARD_PWM_FD,
+      unRightDutyCycle);
 
    /* Update left motor */
-   //if(((m_nLeftTarget < 0) && bLeftNegative) || ((m_nLeftTarget >= 0) && !bLeftNegative)) {
-   if(1) {
-      m_pcDifferentialDriveSystem->ConfigureLeftMotor(
-         bLeftNegative  ? CDifferentialDriveSystem::EBridgeMode::REVERSE_PWM_FD :
-                          CDifferentialDriveSystem::EBridgeMode::FORWARD_PWM_FD,
-         unLeftDutyCycle);
-   }
-   else {
-      m_pcDifferentialDriveSystem->ConfigureLeftMotor(CDifferentialDriveSystem::EBridgeMode::COAST);
-   }
+   m_pcDifferentialDriveSystem->ConfigureLeftMotor(
+      bLeftNegative  ? CDifferentialDriveSystem::EBridgeMode::REVERSE_PWM_FD :
+                       CDifferentialDriveSystem::EBridgeMode::FORWARD_PWM_FD,
+      unLeftDutyCycle);
 
    /* copy the step counters for velocity measurements */
    m_pcDifferentialDriveSystem->m_nRightStepsOut = m_pcDifferentialDriveSystem->m_nRightSteps;
    m_pcDifferentialDriveSystem->m_nLeftStepsOut = m_pcDifferentialDriveSystem->m_nLeftSteps; 
-
    /* clear the step counters */
    m_pcDifferentialDriveSystem->m_nRightSteps = 0;
    m_pcDifferentialDriveSystem->m_nLeftSteps = 0;
-
-   /* copy dds params */
-   m_pcDifferentialDriveSystem->m_nLeftErrorOut = nLeftError;
-   //m_pcDifferentialDriveSystem->m_nLeftErrorOut = unLeftDutyCycle;
-   m_pcDifferentialDriveSystem->m_fLeftErrorIntegralOut = m_fLeftErrorIntegral;
-   m_pcDifferentialDriveSystem->m_nLeftErrorDerivativeOut = nLeftErrorDerivative;
-
-   m_pcDifferentialDriveSystem->m_nRightErrorOut = nRightError;
-   //m_pcDifferentialDriveSystem->m_nRightErrorOut = unRightDutyCycle;
-   m_pcDifferentialDriveSystem->m_fRightErrorIntegralOut = m_fRightErrorIntegral;
-   //m_pcDifferentialDriveSystem->m_fRightErrorIntegralOut = m_fKp;
-   m_pcDifferentialDriveSystem->m_nRightErrorDerivativeOut = nRightErrorDerivative;
 }
 
 /****************************************/

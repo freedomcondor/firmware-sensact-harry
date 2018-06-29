@@ -4,23 +4,14 @@
 #include <stdint.h>
 #include <interrupt.h>
 
-#define MAX_INTGRALWINDOW 255
-
 class CDifferentialDriveSystem {
 public:
    CDifferentialDriveSystem();
 
    void SetTargetVelocity(int16_t n_left_speed, int16_t n_right_speed);
-   void SetPIDPara(float fKp, float fKi, float fKd);
-
-   void floattry(uint8_t temp1, uint8_t temp2, uint8_t temp3, uint8_t temp4);
-   uint8_t float1, float2, float3, float4;
    
    int16_t GetLeftVelocity();
    int16_t GetRightVelocity();
-
-   int16_t GetLeftDDSParams(int16_t* error, float* errorIntergral, int16_t* errorDerivative);
-   int16_t GetRightDDSParams(int16_t* error, float* errorIntergral, int16_t* errorDerivative);
 
    void Enable();
    void Disable();
@@ -61,7 +52,6 @@ public:
       void Enable();
       void Disable();
       void SetTargetVelocity(int16_t n_left_speed, int16_t n_right_speed);
-      void SetPIDPara(float fKp, float fKi, float fKd);
    private:
       void ServiceRoutine();
    private:   
@@ -73,18 +63,9 @@ public:
       int16_t m_nRightTarget;
       int16_t m_nRightLastError;
       float m_fRightErrorIntegral;
-      //const float m_fKp;
-      //const float m_fKi;
-      //const float m_fKd;     
-      float m_fKp;
-      float m_fKi;
-      float m_fKd;     
-
-      int16_t m_nLeftStepWindow[MAX_INTGRALWINDOW];
-      int16_t m_nRightStepWindow[MAX_INTGRALWINDOW];
-      uint16_t windowLength;
-      uint16_t windowOutput;
-      uint16_t windowInput;
+      const float m_fKp;
+      const float m_fKi;
+      const float m_fKd;     
    } m_cPIDControlStepInterrupt;
 
    friend CShaftEncodersInterrupt;
@@ -97,13 +78,6 @@ public:
    volatile int16_t m_nLeftStepsOut;
    volatile int16_t m_nRightStepsOut;
 
-   /* dds params output */
-   volatile int16_t m_nLeftErrorOut;
-   volatile float m_fLeftErrorIntegralOut;
-   volatile int16_t m_nLeftErrorDerivativeOut;
-   volatile int16_t m_nRightErrorOut;
-   volatile float m_fRightErrorIntegralOut;
-   volatile int16_t m_nRightErrorDerivativeOut;
 };
 
 #endif
