@@ -54,15 +54,22 @@ void CFirmware::Exec() {
                }
             }
             break;
-         case CPacketControlInterface::CPacket::EType::SET_DDS_SPEED:
+         case CPacketControlInterface::CPacket::EType::SET_DDS_SPEED_RIGHT:
             /* Set the speed of the differential drive system */
-            if(cPacket.GetDataLength() == 4) {
+            if(cPacket.GetDataLength() == 2) {
                const uint8_t* punRxData = cPacket.GetDataPointer();
-               int16_t nLeftVelocity = 0, nRightVelocity = 0;
-               
-               reinterpret_cast<uint16_t&>(nLeftVelocity) = (punRxData[0] << 8) | punRxData[1];
-               reinterpret_cast<uint16_t&>(nRightVelocity) = (punRxData[2] << 8) | punRxData[3];
-               m_cDifferentialDriveSystem.SetTargetVelocity(nLeftVelocity, nRightVelocity);
+               int16_t nVelocity;              
+               reinterpret_cast<uint16_t&>(nVelocity) = (punRxData[0] << 8) | punRxData[1];
+               m_cDifferentialDriveSystem.SetRightTargetVelocity(nVelocity);
+            }
+            break;
+         case CPacketControlInterface::CPacket::EType::SET_DDS_SPEED_LEFT:
+            /* Set the speed of the differential drive system */
+            if(cPacket.GetDataLength() == 2) {
+               const uint8_t* punRxData = cPacket.GetDataPointer();
+               int16_t nVelocity;              
+               reinterpret_cast<uint16_t&>(nVelocity) = (punRxData[0] << 8) | punRxData[1];
+               m_cDifferentialDriveSystem.SetLeftTargetVelocity(nVelocity);
             }
             break;
          case CPacketControlInterface::CPacket::EType::GET_DDS_SPEED:

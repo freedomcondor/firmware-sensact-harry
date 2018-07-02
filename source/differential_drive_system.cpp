@@ -71,8 +71,15 @@ CDifferentialDriveSystem::CDifferentialDriveSystem() :
 /****************************************/
 /****************************************/
 
-void CDifferentialDriveSystem::SetTargetVelocity(int16_t n_left_speed, int16_t n_right_speed) {
-   m_cPIDControlStepInterrupt.SetTargetVelocity(n_left_speed, n_right_speed);
+void CDifferentialDriveSystem::SetLeftTargetVelocity(int16_t n_velocity) {
+   m_cPIDControlStepInterrupt.SetLeftTargetVelocity(n_velocity);
+}
+
+/****************************************/
+/****************************************/
+
+void CDifferentialDriveSystem::SetRightTargetVelocity(int16_t n_velocity) {
+   m_cPIDControlStepInterrupt.SetRightTargetVelocity(n_velocity);
 }
 
 /****************************************/
@@ -343,10 +350,21 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::Disable() {
 /****************************************/
 /****************************************/
 
-void CDifferentialDriveSystem::CPIDControlStepInterrupt::SetTargetVelocity(int16_t n_left_speed, 
-                                                                           int16_t n_right_speed) {
-   m_nLeftTarget = n_left_speed;
-   m_nRightTarget = n_right_speed;
+void CDifferentialDriveSystem::CPIDControlStepInterrupt::SetLeftTargetVelocity(int16_t n_velocity) {
+   uint8_t unSREG = SREG;
+   cli();
+   m_nLeftTarget = n_velocity;
+   SREG = unSREG;
+}
+
+/****************************************/
+/****************************************/
+
+void CDifferentialDriveSystem::CPIDControlStepInterrupt::SetRightTargetVelocity(int16_t n_velocity) {
+   uint8_t unSREG = SREG;
+   cli();
+   m_nRightTarget = n_velocity;
+   SREG = unSREG;
 }
 
 /****************************************/
@@ -357,7 +375,7 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::ServiceRoutine() {
    int16_t nLeftError = m_nLeftTarget - m_pcDifferentialDriveSystem->m_nLeftSteps;
    /* Accumulate the integral component */
    m_nLeftErrorIntegral += nLeftError;
-   /* intergral limit*/
+   /* Limit intergral component */
    if (m_nLeftErrorIntegral > m_nIntegralLimit) m_nLeftErrorIntegral = m_nIntegralLimit;
    if (m_nLeftErrorIntegral < -m_nIntegralLimit) m_nLeftErrorIntegral = -m_nIntegralLimit;
    /* Calculate the derivate component */
@@ -378,7 +396,7 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::ServiceRoutine() {
    int16_t nRightError = m_nRightTarget - m_pcDifferentialDriveSystem->m_nRightSteps;
    /* Accumulate the integral component */
    m_nRightErrorIntegral += nRightError;
-   /* intergral limit*/
+   /* Limit intergral component */
    if (m_nRightErrorIntegral > m_nIntegralLimit) m_nRightErrorIntegral = m_nIntegralLimit;
    if (m_nRightErrorIntegral < -m_nIntegralLimit) m_nRightErrorIntegral = -m_nIntegralLimit;
    /* Calculate the derivate component */

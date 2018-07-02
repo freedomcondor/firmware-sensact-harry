@@ -12,15 +12,18 @@ CPacketControlInterface::CPacket::EType CPacketControlInterface::CPacket::GetTyp
       return EType::SET_DDS_ENABLE;
       break;
    case 0x11:
-      return EType::SET_DDS_SPEED;
+      return EType::SET_DDS_SPEED_LEFT;
       break;
    case 0x12:
-      return EType::GET_DDS_SPEED;
+      return EType::SET_DDS_SPEED_RIGHT;
       break;
    case 0x13:
-      return EType::SET_DDS_PARAMS;
+      return EType::GET_DDS_SPEED;
       break;
    case 0x14:
+      return EType::SET_DDS_PARAMS;
+      break;
+   case 0x15:
       return EType::GET_DDS_PARAMS;
       break;
    default:

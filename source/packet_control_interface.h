@@ -49,10 +49,11 @@ public:
          /*************************************/
          /* Differential Drive System Packets */
          SET_DDS_ENABLE = 0x10,
-         SET_DDS_SPEED  = 0x11,
-         GET_DDS_SPEED  = 0x12,
-         SET_DDS_PARAMS = 0x13,
-         GET_DDS_PARAMS = 0x14,
+         SET_DDS_SPEED_LEFT = 0x11,
+         SET_DDS_SPEED_RIGHT = 0x12,
+         GET_DDS_SPEED  = 0x13,
+         SET_DDS_PARAMS = 0x14,
+         GET_DDS_PARAMS = 0x15,
          /* Accelerometer System Packets */
          GET_ACCEL_READING = 0x20,
 
