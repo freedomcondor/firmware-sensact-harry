@@ -315,7 +315,7 @@ CDifferentialDriveSystem::CPIDControlStepInterrupt::CPIDControlStepInterrupt(
    m_fKp(0.707f),
    m_fKi(0.625f),
    m_fKd(0.056f),
-   m_fIntegralLimit(300.0f) {
+   m_nIntegralLimit(300) {
    Register(this, un_intr_vect_num);
 }
 
@@ -325,9 +325,9 @@ CDifferentialDriveSystem::CPIDControlStepInterrupt::CPIDControlStepInterrupt(
 void CDifferentialDriveSystem::CPIDControlStepInterrupt::Enable() {
    /* clear intermediate variables */
    m_nLeftLastError = 0;
-   m_fLeftErrorIntegral = 0.0f;
+   m_nLeftErrorIntegral = 0;
    m_nRightLastError = 0;
-   m_fRightErrorIntegral = 0.0f;
+   m_nRightErrorIntegral = 0;
    /* enable interrupt */
    TIMSK1 |= (1 << OCIE1A);
 }
@@ -356,17 +356,17 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::ServiceRoutine() {
    /* Calculate left PID intermediates */
    int16_t nLeftError = m_nLeftTarget - m_pcDifferentialDriveSystem->m_nLeftSteps;
    /* Accumulate the integral component */
-   m_fLeftErrorIntegral += nLeftError;
+   m_nLeftErrorIntegral += nLeftError;
    /* intergral limit*/
-   if (m_fLeftErrorIntegral > m_fIntegralLimit) m_fLeftErrorIntegral = m_fIntegralLimit;
-   if (m_fLeftErrorIntegral < -m_fIntegralLimit) m_fLeftErrorIntegral = -m_fIntegralLimit;
+   if (m_nLeftErrorIntegral > m_nIntegralLimit) m_nLeftErrorIntegral = m_nIntegralLimit;
+   if (m_nLeftErrorIntegral < -m_nIntegralLimit) m_nLeftErrorIntegral = -m_nIntegralLimit;
    /* Calculate the derivate component */
    int16_t nLeftErrorDerivative = (nLeftError - m_nLeftLastError);
    m_nLeftLastError = nLeftError;
    /* Calculate output value */
    float fLeftOutput =
       (m_fKp * nLeftError) +
-      (m_fKi * m_fLeftErrorIntegral) +
+      (m_fKi * m_nLeftErrorIntegral) +
       (m_fKd * nLeftErrorDerivative) + m_nLeftTarget;
    /* store the sign of the output */
    bool bLeftNegative = (fLeftOutput < 0.0f);
@@ -377,17 +377,17 @@ void CDifferentialDriveSystem::CPIDControlStepInterrupt::ServiceRoutine() {
    /* Calculate right PID intermediates */
    int16_t nRightError = m_nRightTarget - m_pcDifferentialDriveSystem->m_nRightSteps;
    /* Accumulate the integral component */
-   m_fRightErrorIntegral += nRightError;
+   m_nRightErrorIntegral += nRightError;
    /* intergral limit*/
-   if (m_fRightErrorIntegral > m_fIntegralLimit) m_fRightErrorIntegral = m_fIntegralLimit;
-   if (m_fRightErrorIntegral < -m_fIntegralLimit) m_fRightErrorIntegral = -m_fIntegralLimit;
+   if (m_nRightErrorIntegral > m_nIntegralLimit) m_nRightErrorIntegral = m_nIntegralLimit;
+   if (m_nRightErrorIntegral < -m_nIntegralLimit) m_nRightErrorIntegral = -m_nIntegralLimit;
    /* Calculate the derivate component */
    int16_t nRightErrorDerivative = (nRightError - m_nRightLastError);
    m_nRightLastError = nRightError;
    /* Calculate output value */
    float fRightOutput =
       (m_fKp * nRightError) +
-      (m_fKi * m_fRightErrorIntegral) +
+      (m_fKi * m_nRightErrorIntegral) +
       (m_fKd * nRightErrorDerivative) + m_nRightTarget;
    /* store the sign of the output */
    bool bRightNegative = (fRightOutput < 0.0f);

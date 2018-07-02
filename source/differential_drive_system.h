@@ -59,14 +59,14 @@ public:
 
       int16_t m_nLeftTarget;
       int16_t m_nLeftLastError;
-      float m_fLeftErrorIntegral;
+      int32_t m_nLeftErrorIntegral;
       int16_t m_nRightTarget;
       int16_t m_nRightLastError;
-      float m_fRightErrorIntegral;
+      int32_t m_nRightErrorIntegral;
       const float m_fKp;
       const float m_fKi;
       const float m_fKd;     
-      const float m_fIntegralLimit;     
+      const int32_t m_nIntegralLimit;
    } m_cPIDControlStepInterrupt;
 
    friend CShaftEncodersInterrupt;
